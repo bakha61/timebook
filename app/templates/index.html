@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Timebook · Учёт рабочего времени</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand" aria-label="Timebook">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>timebook<span class="brand-period">.</span></span>
+      </div>
+      <div class="header-actions">
+        <span class="header-note" data-i18n="headerNote">Рабочее время без лишнего</span>
+        <div class="language-switch" role="group" aria-label="Language / Язык">
+          <button type="button" class="language-button" data-language="ru" aria-pressed="true">RU</button>
+          <button type="button" class="language-button" data-language="en" aria-pressed="false">EN</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-intro">
+        <div>
+          <h1 data-i18n="pageTitle">Учёт рабочего времени</h1>
+          <p class="intro-copy" data-i18n="intro">Запускайте таймер для задачи и смотрите, на что ушло время.</p>
+        </div>
+        <span class="local-badge" data-i18n="localBadge">Данные сохранены на этом устройстве</span>
+      </div>
+
+      <div id="globalNotice" class="notice" role="status" aria-live="polite" hidden></div>
+
+      <div class="workspace-grid">
+        <aside class="panel team-panel" aria-labelledby="teamTitle">
+          <div class="panel-heading">
+            <div>
+              <h2 id="teamTitle" data-i18n="teamTitle">Сотрудники</h2>
+            </div>
+            <span id="employeeCount" class="count-pill" aria-label="Количество сотрудников: 0">0</span>
+          </div>
+
+          <form id="employeeForm" class="add-form" novalidate>
+            <label for="employeeName" data-i18n="employeeNameLabel">Имя сотрудника</label>
+            <div class="inline-form">
+              <input id="employeeName" name="name" type="text" maxlength="80" autocomplete="off" required aria-describedby="employeeError" data-i18n-placeholder="employeeNamePlaceholder" placeholder="Например, Анна Иванова">
+              <button id="addEmployeeButton" type="submit" class="button button-primary" data-i18n="addEmployee">Добавить</button>
+            </div>
+            <p id="employeeError" class="field-error" role="alert" hidden></p>
+          </form>
+
+          <div class="list-heading"><span data-i18n="teamList">КОМАНДА</span><span id="teamListHint" data-i18n="selectEmployee">Выберите сотрудника</span></div>
+          <ul id="employeeList" class="employee-list" aria-labelledby="teamTitle"></ul>
+          <p id="employeeEmpty" class="empty-list" data-i18n="noEmployees">Добавьте первого сотрудника, чтобы начать.</p>
+        </aside>
+
+        <div class="main-column">
+          <section class="panel timer-panel" aria-labelledby="timerTitle">
+            <div class="panel-heading">
+              <div>
+                <h2 id="timerTitle" data-i18n="timerTitle">Текущая задача</h2>
+              </div>
+              <span id="timerState" class="state-badge state-idle" data-i18n="timerIdle">Не запущен</span>
+            </div>
+
+            <div id="noSelection" class="selection-placeholder">
+              <span class="placeholder-icon" aria-hidden="true">↗</span>
+              <p data-i18n="chooseEmployee">Выберите сотрудника слева, чтобы начать работу.</p>
+            </div>
+
+            <div id="timerControls" hidden>
+              <div class="selected-person">
+                <span id="selectedAvatar" class="avatar avatar-large" aria-hidden="true"></span>
+                <div><span class="overline" data-i18n="trackingFor">УЧЁТ ВРЕМЕНИ ДЛЯ</span><strong id="selectedName"></strong></div>
+              </div>
+
+              <form id="timerForm" novalidate>
+                <label for="taskDescription" data-i18n="taskLabel">Над чем работаете?</label>
+                <input id="taskDescription" name="description" type="text" maxlength="500" autocomplete="off" required aria-describedby="taskError" data-i18n-placeholder="taskPlaceholder" placeholder="Кратко опишите задачу">
+                <p id="taskError" class="field-error" role="alert" hidden></p>
+                <button id="startButton" type="submit" class="button button-primary button-wide"><span class="play-icon" aria-hidden="true"></span><span data-i18n="startTimer">Запустить таймер</span></button>
+              </form>
+
+              <div id="activeTimer" class="active-timer" hidden>
+                <div class="active-task"><span class="pulse-dot" aria-hidden="true"></span><span id="activeDescription"></span></div>
+                <div id="elapsedTime" class="elapsed-time" aria-label="Прошедшее время">00:00:00</div>
+                <p class="timer-hint" data-i18n="timerRuns">Таймер продолжит работать после закрытия страницы.</p>
+                <button id="stopButton" type="button" class="button button-stop button-wide"><span class="stop-icon" aria-hidden="true"></span><span data-i18n="stopTimer">Остановить таймер</span></button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel report-panel" aria-labelledby="reportTitle">
+            <div class="panel-heading report-heading">
+              <div>
+                <h2 id="reportTitle" data-i18n="reportTitle">История времени</h2>
+              </div>
+              <div class="total-block"><span data-i18n="totalTime">ИТОГО</span><strong id="totalTime">00:00:00</strong></div>
+            </div>
+
+            <form id="dateForm" class="date-form" novalidate>
+              <div class="date-field"><label for="fromDate" data-i18n="fromDate">С</label><input id="fromDate" type="date" required></div>
+              <div class="date-field"><label for="toDate" data-i18n="toDate">По</label><input id="toDate" type="date" required></div>
+              <button id="applyDates" type="submit" class="button button-secondary" data-i18n="showReport">Показать</button>
+            </form>
+            <p id="dateError" class="field-error" role="alert" hidden></p>
+
+            <div id="reportNoSelection" class="report-empty" data-i18n="reportChooseEmployee">Выберите сотрудника, чтобы увидеть отчёт.</div>
+            <div id="reportEmpty" class="report-empty" data-i18n="emptyReport" hidden>За этот период записей нет.</div>
+            <div id="reportContent" class="table-scroll" hidden>
+              <table>
+                <thead><tr><th scope="col" data-i18n="tableTask">ЗАДАЧА</th><th scope="col" data-i18n="tableStart">НАЧАЛО</th><th scope="col" data-i18n="tableEnd">КОНЕЦ</th><th scope="col" class="duration-column" data-i18n="tableDuration">ВРЕМЯ</th></tr></thead>
+                <tbody id="entriesBody"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer"><span>timebook.</span><span data-i18n="footer">Простой инструмент для команды · Без учётной записи</span></footer>
+  </div>
+</body>
+</html>
